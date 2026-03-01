@@ -10,7 +10,7 @@ export default function App() {
   const [currentTool, setCurrentTool] = useState<Tool>('image');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
-  const [keyStatus, setKeyStatus] = useState<'gray' | 'green' | 'red'>('gray');
+  const [keyStatus, setKeyStatus] = useState<'gray' | 'green' | 'red' | 'blue'>(apiKey ? 'blue' : 'gray');
 
   const addLog = (message: string, type: 'info' | 'error' = 'info') => {
     const id = Date.now() + Math.random();
@@ -23,30 +23,31 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    if (!apiKey) {
+  const validateApiKey = async (keyToTest: string) => {
+    if (!keyToTest) {
       setKeyStatus('gray');
       return;
     }
     
-    const testKey = async () => {
-      try {
-        const { GoogleGenAI } = await import('@google/genai');
-        const ai = new GoogleGenAI({ apiKey });
-        addLog('Validating API Key with Gemini API (gemini-3-flash-preview)...', 'info');
-        await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: 'hi'
-        });
-        setKeyStatus('green');
-        addLog('API Key validated successfully.', 'info');
-      } catch (error: any) {
-        setKeyStatus('red');
-        addLog(`Gemini API Validation Error: ${error.message}`, 'error');
-      }
-    };
-    
-    testKey();
+    setKeyStatus('blue'); // Blue means validating
+    try {
+      const { GoogleGenAI } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: keyToTest });
+      addLog('Validating API Key with Gemini API...', 'info');
+      await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: 'hi'
+      });
+      setKeyStatus('green');
+      addLog('API Key validated successfully.', 'info');
+    } catch (error: any) {
+      setKeyStatus('red');
+      addLog(`Gemini API Validation Error: ${error.message}`, 'error');
+    }
+  };
+
+  useEffect(() => {
+    validateApiKey(apiKey);
   }, [apiKey]);
 
   const handleSetApiKey = (key: string) => {
@@ -55,11 +56,11 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-white overflow-hidden font-sans">
+    <div className="flex h-screen w-screen bg-white overflow-hidden font-sans print:h-auto print:overflow-visible">
       <Sidebar currentTool={currentTool} setTool={setCurrentTool} />
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <Topbar logs={logs} apiKey={apiKey} setApiKey={handleSetApiKey} keyStatus={keyStatus} />
-        <main className="flex-1 overflow-hidden relative">
+      <div className="flex-1 flex flex-col h-full overflow-hidden print:h-auto print:overflow-visible print:block">
+        <Topbar logs={logs} apiKey={apiKey} setApiKey={handleSetApiKey} keyStatus={keyStatus} onRefreshKey={() => validateApiKey(apiKey)} currentTool={currentTool} />
+        <main className="flex-1 overflow-hidden relative print:h-auto print:overflow-visible print:block">
           {currentTool === 'image' && <ImageEditor addLog={addLog} />}
           {currentTool === 'markdown' && <MarkdownEditor />}
           {currentTool === 'compare' && <DatasheetCompare apiKey={apiKey} addLog={addLog} />}

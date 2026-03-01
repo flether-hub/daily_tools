@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import { GoogleGenAI, Type } from '@google/genai';
+import * as XLSX from 'xlsx';
 
 interface CompareResult {
   feature: string;
@@ -14,6 +15,33 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
   const [dataFile, setDataFile] = useState<File | null>(null);
   const [results, setResults] = useState<CompareResult[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const handleExportExcel = () => {
+    if (results.length === 0) return;
+    
+    const worksheetData = results.map(r => ({
+      'Feature': r.feature,
+      'Requirement': r.requirement,
+      'Datasheet Spec': r.datasheet,
+      'Status': r.gap ? 'Gap' : 'Met'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Comparison");
+    
+    // Auto-size columns
+    const maxWidths = [
+      { wch: 20 }, // Feature
+      { wch: 40 }, // Requirement
+      { wch: 40 }, // Datasheet Spec
+      { wch: 10 }  // Status
+    ];
+    worksheet['!cols'] = maxWidths;
+
+    XLSX.writeFile(workbook, "SpecMatch_Comparison.xlsx");
+    addLog('Exported comparison to Excel successfully.', 'info');
+  };
 
   const handleCompare = async () => {
     if (!reqFile || !dataFile) {
@@ -40,7 +68,7 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
         model: 'gemini-3-flash-preview',
         contents: {
           parts: [
-            { text: '你是一个产品经理助手。请对比用户需求文档和产品规格书。提取出功能点、用户需求是什么、规格书里怎么写的，以及是否存在差异（如果规格书没有满足需求则gap为true，否则为false）。' },
+            { text: 'You are an expert product manager and systems engineer. Your task is to perform an EXHAUSTIVE and COMPREHENSIVE comparison between the provided user requirements document and the product datasheet. \n\nCRITICAL INSTRUCTIONS:\n1. You MUST extract EVERY SINGLE requirement, feature, specification, constraint, and capability mentioned in the requirements document.\n2. Do NOT summarize or group them too broadly. Break them down into individual, testable line items.\n3. For each extracted requirement, find the corresponding specification or capability in the datasheet.\n4. Determine if there is a gap. A gap exists (gap: true) IF AND ONLY IF the datasheet explicitly fails to meet the requirement, or if the datasheet completely lacks information to verify the requirement.\n5. Your output must be a highly detailed, exhaustive array covering 100% of the requirements.\n6. CRITICAL: DO NOT TRANSLATE ANY TEXT. Keep the exact original text from the source documents. If the requirement is in Chinese, the output must be in Chinese. If the specification is in English, the output must be in English. Do not translate between languages, even if the two documents are in different languages.' },
             { inlineData: { data: reqBase64.split(',')[1], mimeType: reqFile.type || 'text/plain' } },
             { inlineData: { data: dataBase64.split(',')[1], mimeType: dataFile.type || 'text/plain' } }
           ]
@@ -77,20 +105,29 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
 
   return (
     <div className="p-8 h-full flex flex-col">
-      <h2 className="text-2xl font-bold text-slate-800 mb-6">需求与规格书对比</h2>
+      <div className="flex justify-end items-center mb-6">
+        {results.length > 0 && (
+          <button 
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors shadow-sm"
+          >
+            <Download size={18} /> Export Excel
+          </button>
+        )}
+      </div>
       
       <div className="flex gap-8 mb-8">
         <div className="flex-1 border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 transition-colors relative">
           <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setReqFile(e.target.files?.[0] || null)} accept=".txt,.md,.pdf" />
           <Upload className="text-slate-400 mb-2" size={32} />
-          <p className="text-slate-700 font-medium">上传用户需求</p>
+          <p className="text-slate-700 font-medium">Upload Requirements</p>
           <p className="text-sm text-slate-500 mt-1">{reqFile ? reqFile.name : 'PDF, TXT, MD'}</p>
         </div>
         
         <div className="flex-1 border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 transition-colors relative">
           <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setDataFile(e.target.files?.[0] || null)} accept=".txt,.md,.pdf" />
           <Upload className="text-slate-400 mb-2" size={32} />
-          <p className="text-slate-700 font-medium">上传产品规格书</p>
+          <p className="text-slate-700 font-medium">Upload Datasheet</p>
           <p className="text-sm text-slate-500 mt-1">{dataFile ? dataFile.name : 'PDF, TXT, MD'}</p>
         </div>
       </div>
@@ -100,7 +137,7 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
         disabled={loading || !reqFile || !dataFile}
         className="bg-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed self-start mb-8 transition-colors"
       >
-        {loading ? '对比中...' : '生成对比'}
+        {loading ? 'Comparing...' : 'Generate Comparison'}
       </button>
 
       {results.length > 0 && (
@@ -108,10 +145,10 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 sticky top-0">
               <tr>
-                <th className="p-4 font-semibold text-slate-700 border-b border-slate-200">功能</th>
-                <th className="p-4 font-semibold text-slate-700 border-b border-slate-200">需求</th>
-                <th className="p-4 font-semibold text-slate-700 border-b border-slate-200">规格书参数</th>
-                <th className="p-4 font-semibold text-slate-700 border-b border-slate-200 w-24">状态</th>
+                <th className="p-4 font-semibold text-slate-700 border-b border-slate-200">Feature</th>
+                <th className="p-4 font-semibold text-slate-700 border-b border-slate-200">Requirement</th>
+                <th className="p-4 font-semibold text-slate-700 border-b border-slate-200">Datasheet Spec</th>
+                <th className="p-4 font-semibold text-slate-700 border-b border-slate-200 w-24">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -122,9 +159,9 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
                   <td className="p-4 text-slate-600">{r.datasheet}</td>
                   <td className="p-4">
                     {r.gap ? (
-                      <span className="flex items-center gap-1 text-red-600 font-medium text-sm"><AlertCircle size={16}/> 不满足</span>
+                      <span className="flex items-center gap-1 text-red-600 font-medium text-sm"><AlertCircle size={16}/> Gap</span>
                     ) : (
-                      <span className="flex items-center gap-1 text-emerald-600 font-medium text-sm"><CheckCircle2 size={16}/> 满足</span>
+                      <span className="flex items-center gap-1 text-emerald-600 font-medium text-sm"><CheckCircle2 size={16}/> Met</span>
                     )}
                   </td>
                 </tr>

@@ -15,17 +15,17 @@ export function Sidebar({ currentTool, setTool }: { currentTool: Tool, setTool: 
       </button>
 
       <div className="flex flex-col gap-2 w-full px-3">
-        <button onClick={() => setTool('image')} className={`flex items-center gap-3 p-3 rounded-full transition-colors ${currentTool === 'image' ? 'bg-[#e1e5ea] text-slate-900 font-semibold' : 'text-slate-700 hover:bg-[#e1e5ea]/50'} ${isCollapsed ? 'justify-center' : 'justify-start px-4'}`} title="图片处理">
+        <button onClick={() => setTool('image')} className={`flex items-center gap-3 p-3 rounded-full transition-colors ${currentTool === 'image' ? 'bg-[#e1e5ea] text-slate-900 font-semibold' : 'text-slate-700 hover:bg-[#e1e5ea]/50'} ${isCollapsed ? 'justify-center' : 'justify-start px-4'}`} title="ImageEditor">
           <Image size={22} className="text-blue-500 flex-shrink-0" />
-          {!isCollapsed && <span className="whitespace-nowrap">图片处理</span>}
+          {!isCollapsed && <span className="whitespace-nowrap">ImageEditor</span>}
         </button>
-        <button onClick={() => setTool('markdown')} className={`flex items-center gap-3 p-3 rounded-full transition-colors ${currentTool === 'markdown' ? 'bg-[#e1e5ea] text-slate-900 font-semibold' : 'text-slate-700 hover:bg-[#e1e5ea]/50'} ${isCollapsed ? 'justify-center' : 'justify-start px-4'}`} title="Markdown">
+        <button onClick={() => setTool('markdown')} className={`flex items-center gap-3 p-3 rounded-full transition-colors ${currentTool === 'markdown' ? 'bg-[#e1e5ea] text-slate-900 font-semibold' : 'text-slate-700 hover:bg-[#e1e5ea]/50'} ${isCollapsed ? 'justify-center' : 'justify-start px-4'}`} title="DocBuilder">
           <FileText size={22} className="text-emerald-500 flex-shrink-0" />
-          {!isCollapsed && <span className="whitespace-nowrap">Markdown</span>}
+          {!isCollapsed && <span className="whitespace-nowrap">DocBuilder</span>}
         </button>
-        <button onClick={() => setTool('compare')} className={`flex items-center gap-3 p-3 rounded-full transition-colors ${currentTool === 'compare' ? 'bg-[#e1e5ea] text-slate-900 font-semibold' : 'text-slate-700 hover:bg-[#e1e5ea]/50'} ${isCollapsed ? 'justify-center' : 'justify-start px-4'}`} title="需求对比">
+        <button onClick={() => setTool('compare')} className={`flex items-center gap-3 p-3 rounded-full transition-colors ${currentTool === 'compare' ? 'bg-[#e1e5ea] text-slate-900 font-semibold' : 'text-slate-700 hover:bg-[#e1e5ea]/50'} ${isCollapsed ? 'justify-center' : 'justify-start px-4'}`} title="SpecMatch">
           <GitCompare size={22} className="text-orange-500 flex-shrink-0" />
-          {!isCollapsed && <span className="whitespace-nowrap">需求对比</span>}
+          {!isCollapsed && <span className="whitespace-nowrap">SpecMatch</span>}
         </button>
       </div>
     </div>

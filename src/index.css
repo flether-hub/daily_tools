@@ -8,3 +8,17 @@
     100% { transform: translateX(-100%); }
   }
 }
+
+@media print {
+  body, html {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .prose p, .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6, .prose pre, .prose blockquote, .prose li, .prose table, .prose img {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  @page {
+    margin: 2cm;
+  }
+}
