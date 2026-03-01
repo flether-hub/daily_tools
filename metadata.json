@@ -1,0 +1,5 @@
+{
+  "name": "Frontend Toolset",
+  "description": "A pure frontend toolset with Image Editor, Markdown Editor, and Datasheet Comparison.",
+  "requestFramePermissions": []
+}
