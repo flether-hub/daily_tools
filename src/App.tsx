@@ -13,7 +13,14 @@ export default function App() {
   const [keyStatus, setKeyStatus] = useState<'gray' | 'green' | 'red'>('gray');
 
   const addLog = (message: string, type: 'info' | 'error' = 'info') => {
-    setLogs(prev => [...prev, { id: Date.now() + Math.random(), message, type, timestamp: new Date() }]);
+    const id = Date.now() + Math.random();
+    setLogs(prev => [...prev, { id, message, type, timestamp: new Date() }]);
+    
+    if (type === 'info') {
+      setTimeout(() => {
+        setLogs(prev => prev.filter(log => log.id !== id));
+      }, 3000);
+    }
   };
 
   useEffect(() => {
@@ -26,15 +33,16 @@ export default function App() {
       try {
         const { GoogleGenAI } = await import('@google/genai');
         const ai = new GoogleGenAI({ apiKey });
+        addLog('Validating API Key with Gemini API (gemini-3-flash-preview)...', 'info');
         await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: 'hi'
         });
         setKeyStatus('green');
-        addLog('API Key 验证成功。', 'info');
+        addLog('API Key validated successfully.', 'info');
       } catch (error: any) {
         setKeyStatus('red');
-        addLog(`API Key 验证失败: ${error.message}`, 'error');
+        addLog(`Gemini API Validation Error: ${error.message}`, 'error');
       }
     };
     

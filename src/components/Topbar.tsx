@@ -14,19 +14,20 @@ export function Topbar({ logs, apiKey, setApiKey, keyStatus }: { logs: LogEntry[
   const statusColor = keyStatus === 'green' ? 'bg-emerald-500' : keyStatus === 'red' ? 'bg-red-500' : 'bg-gray-400';
 
   return (
-    <div className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm flex-shrink-0">
+    <div className="print:hidden h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm flex-shrink-0">
       <div className="flex items-center gap-4 mr-6">
         <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent whitespace-nowrap">DailyTools Pro</h1>
       </div>
 
-      <div className="flex-1 overflow-hidden h-full flex items-center relative border-l border-slate-200 pl-6">
-        <div className="absolute whitespace-nowrap animate-marquee flex gap-12">
-          {logs.slice(-10).map(log => (
-            <span key={log.id} className={`${log.type === 'error' ? 'text-red-500 font-medium' : 'text-slate-600'}`}>
-              [{log.timestamp.toLocaleTimeString()}] {log.message}
+      <div className="flex-1 overflow-hidden h-full flex items-center border-l border-slate-200 pl-6">
+        <div className="flex items-center w-full">
+          {logs.length > 0 ? (
+            <span key={logs[logs.length - 1].id} className={`truncate animate-in fade-in duration-300 ${logs[logs.length - 1].type === 'error' ? 'text-red-500 font-medium' : 'text-slate-600'}`}>
+              [{logs[logs.length - 1].timestamp.toLocaleTimeString()}] {logs[logs.length - 1].message}
             </span>
-          ))}
-          {logs.length === 0 && <span className="text-slate-400 italic">暂无日志...</span>}
+          ) : (
+            <span className="text-slate-400 italic animate-in fade-in duration-300">Ready</span>
+          )}
         </div>
       </div>
       

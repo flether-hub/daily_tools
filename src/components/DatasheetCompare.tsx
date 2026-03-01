@@ -17,16 +17,16 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
 
   const handleCompare = async () => {
     if (!reqFile || !dataFile) {
-      addLog('请上传两个文件。', 'error');
+      addLog('Please upload both files.', 'error');
       return;
     }
     if (!apiKey) {
-      addLog('请先设置 Gemini API Key。', 'error');
+      addLog('Please set Gemini API Key first.', 'error');
       return;
     }
 
     setLoading(true);
-    addLog('开始对比...', 'info');
+    addLog('Starting comparison...', 'info');
 
     try {
       const ai = new GoogleGenAI({ apiKey });
@@ -34,7 +34,7 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
       const reqBase64 = await fileToBase64(reqFile);
       const dataBase64 = await fileToBase64(dataFile);
 
-      addLog('文件处理完毕，正在发送至 Gemini API...', 'info');
+      addLog(`Sending request to Gemini API (Model: gemini-3-flash-preview)...`, 'info');
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -66,10 +66,10 @@ export function DatasheetCompare({ apiKey, addLog }: { apiKey: string, addLog: (
       const jsonStr = response.text || '[]';
       const parsed = JSON.parse(jsonStr) as CompareResult[];
       setResults(parsed);
-      addLog('对比完成。', 'info');
+      addLog('Received successful response from Gemini API.', 'info');
     } catch (error: any) {
       console.error(error);
-      addLog(`对比出错: ${error.message}`, 'error');
+      addLog(`Gemini API Error: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }

@@ -20,7 +20,7 @@ export function ImageEditor({ addLog }: { addLog: (msg: string, type: 'info'|'er
       const reader = new FileReader();
       reader.addEventListener('load', () => setImageSrc(reader.result?.toString() || null));
       reader.readAsDataURL(e.target.files[0]);
-      addLog('图片已上传', 'info');
+      addLog('Image uploaded successfully', 'info');
       setMode('none');
     }
   };
@@ -49,21 +49,21 @@ export function ImageEditor({ addLog }: { addLog: (msg: string, type: 'info'|'er
 
     setImageSrc(canvas.toDataURL('image/png'));
     setMode('none');
-    addLog('图片已裁剪', 'info');
+    addLog('Image cropped successfully', 'info');
   };
 
   const handleRemoveBackground = async () => {
     if (!imageSrc) return;
     setIsProcessing(true);
-    addLog('开始抠图 (可能需要一点时间下载模型)...', 'info');
+    addLog('Starting background removal model...', 'info');
     try {
       const blob = await removeBackground(imageSrc);
       const url = URL.createObjectURL(blob);
       setImageSrc(url);
-      addLog('抠图成功', 'info');
+      addLog('Background removed successfully', 'info');
     } catch (error: any) {
       console.error(error);
-      addLog(`抠图失败: ${error.message}`, 'error');
+      addLog(`Background removal failed: ${error.message}`, 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -147,7 +147,7 @@ export function ImageEditor({ addLog }: { addLog: (msg: string, type: 'info'|'er
         )}
       </div>
 
-      <div className="flex-1 bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
+      <div className="flex-1 bg-white rounded-2xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
         {!imageSrc ? (
           <div className="text-center">
             <label className="cursor-pointer flex flex-col items-center justify-center w-64 h-64 border-2 border-dashed border-slate-300 rounded-2xl bg-white hover:bg-slate-50 transition-colors">

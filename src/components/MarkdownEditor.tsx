@@ -28,8 +28,8 @@ export function MarkdownEditor() {
   };
 
   return (
-    <div className="flex h-full w-full">
-      <div className="w-1/2 h-full border-r border-slate-200 p-4 flex flex-col">
+    <div className="flex h-full w-full print:block">
+      <div className="w-1/2 h-full border-r border-slate-200 p-4 flex flex-col print:hidden">
         <h2 className="text-lg font-semibold mb-4 text-slate-800">编辑器</h2>
         <textarea
           className="flex-1 w-full p-4 border border-slate-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
@@ -37,8 +37,8 @@ export function MarkdownEditor() {
           onChange={(e) => setMarkdown(e.target.value)}
         />
       </div>
-      <div className="w-1/2 h-full p-4 flex flex-col bg-slate-50">
-        <div className="flex justify-between items-center mb-4">
+      <div className="w-1/2 h-full p-4 flex flex-col bg-slate-50 print:w-full print:bg-white print:p-0">
+        <div className="flex justify-between items-center mb-4 print:hidden">
           <h2 className="text-lg font-semibold text-slate-800">预览</h2>
           <div className="flex gap-2">
             <button onClick={handleDownloadWord} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
@@ -49,7 +49,7 @@ export function MarkdownEditor() {
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto bg-white border border-slate-200 rounded-xl p-8 shadow-sm print:absolute print:top-0 print:left-0 print:w-full print:h-full print:z-50 print:border-none print:shadow-none print:bg-white print:p-0">
+        <div className="flex-1 overflow-auto bg-white border border-slate-200 rounded-xl p-8 shadow-sm print:overflow-visible print:border-none print:shadow-none print:p-0">
           <div ref={previewRef} className="prose max-w-none">
             <Markdown>{markdown}</Markdown>
           </div>
