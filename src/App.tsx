@@ -62,7 +62,7 @@ export default function App() {
         <Topbar logs={logs} apiKey={apiKey} setApiKey={handleSetApiKey} keyStatus={keyStatus} onRefreshKey={() => validateApiKey(apiKey)} currentTool={currentTool} />
         <main className="flex-1 overflow-hidden relative print:h-auto print:overflow-visible print:block">
           {currentTool === 'image' && <ImageEditor addLog={addLog} />}
-          {currentTool === 'markdown' && <MarkdownEditor />}
+          {currentTool === 'markdown' && <MarkdownEditor apiKey={apiKey} addLog={addLog} />}
           {currentTool === 'compare' && <DatasheetCompare apiKey={apiKey} addLog={addLog} />}
         </main>
       </div>

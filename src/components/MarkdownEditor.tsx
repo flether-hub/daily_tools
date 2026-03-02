@@ -1,12 +1,15 @@
 import { useState, useRef } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import rehypeRaw from 'rehype-raw';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Download, Printer, Bold, Italic, Strikethrough, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Link, ImageIcon, Quote, Code, List, ListOrdered, Minus, Table } from 'lucide-react';
+import { Download, Printer, Bold, Italic, Strikethrough, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6, Link, ImageIcon, Quote, Code, List, ListOrdered, Minus, Table, Sparkles, Loader2 } from 'lucide-react';
 
-export function MarkdownEditor() {
+export function MarkdownEditor({ apiKey, addLog }: { apiKey?: string, addLog?: (msg: string, type?: 'info' | 'error') => void }) {
   const [markdown, setMarkdown] = useState(`Markdown 是一种轻量级的标记语言，它允许人们使用易读易写的纯文本格式编写文档。
 
 以下是 Markdown 最常用的语法指南，掌握这些就能满足 95% 以上的日常排版需求：
@@ -188,13 +191,19 @@ def hello_world():
       <body>
         <div class="WordSection1">
           ${previewRef.current.innerHTML}
-          
-          <div style="mso-element:footer" id="f1">
-            <p class="MsoFooter" align="center" style="text-align:center">
-              Page <span style="mso-field-code:' PAGE '"></span> / <span style="mso-field-code:' NUMPAGES '"></span>
-            </p>
-          </div>
         </div>
+        
+        <table id="hrdftrtbl" border="0" cellspacing="0" cellpadding="0" style="display:none;">
+          <tr>
+            <td>
+              <div style="mso-element:footer" id="f1">
+                <p class="MsoFooter" align="center" style="text-align:center">
+                  Page <span style="mso-field-code:' PAGE '"></span> / <span style="mso-field-code:' NUMPAGES '"></span>
+                </p>
+              </div>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `;
@@ -232,6 +241,61 @@ def hello_world():
   const [showTableModal, setShowTableModal] = useState(false);
   const [tableRows, setTableRows] = useState(3);
   const [tableCols, setTableCols] = useState(3);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleAILMUpdate = async () => {
+    if (!apiKey) {
+      addLog?.('Please set your Gemini API key first.', 'error');
+      return;
+    }
+    
+    setIsUpdating(true);
+    addLog?.('Generating AI Models Table...', 'info');
+    
+    try {
+      const { GoogleGenAI } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey });
+      
+      const currentDate = new Date().toISOString().split('T')[0];
+      const prompt = `当前日期：${currentDate}
+
+请联网检索截至今天的最新动态，更新《${currentDate} 最新国内外主流大模型及 AI 产品全景表》。
+
+更新重点：
+
+检查 OpenAI、Anthropic、Google、Meta 的最新进展。
+
+重点关注中国厂商：DeepSeek、阿里、MiniMax、智谱 AI、月之暗面、字节跳动、腾讯、百度。
+
+若有新崛起的黑马公司（如从 Open Source 突然爆发的厂商），请自动将其加入表格。
+
+表格要求：
+
+标题必须包含：“数据日志：${currentDate}”。
+
+优势描述需简明扼要（20字以内）。
+
+产品矩阵需区分 C 端（APP/网页）和 B 端（API/平台）。`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-pro-preview',
+        contents: prompt,
+        config: {
+          systemInstruction: '你是一位顶级 AI 行业分析师。你的任务是基于最新的互联网搜索数据，维护并更新一份《国内外主流大模型及 AI 产品全景表》。\n\n工作准则：\n\n实时性：必须调用谷歌搜索，核实各家公司的最新模型版本（如 OpenAI 是否发布了新 o 系列、DeepSeek 是否有 V 迭代、国内厂商的新动作）。\n\n准确性：区分“发布”与“传闻”，仅列入已官宣或已上线的模型。\n\n格式化：必须严格以 Markdown 表格形式输出，不得包含冗余的解释文本。\n\n对比维度：包括机构公司、核心模型、最新版本、核心优势、综合梯队、核心 AI 产品矩阵（C端/B端）。',
+          tools: [{ googleSearch: {} }],
+        }
+      });
+      
+      const generatedText = response.text || '';
+      insertText(`\n${generatedText}\n`, '');
+      addLog?.('AI Models Table generated successfully.', 'info');
+    } catch (error: any) {
+      console.error(error);
+      addLog?.(`Failed to generate table: ${error.message}`, 'error');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleInsertTable = () => {
     let tableMarkdown = '\n';
@@ -300,6 +364,16 @@ def hello_world():
           <div className="w-px h-5 bg-slate-300 mx-1"></div>
           <ToolbarButton icon={Link} title="Link" onClick={() => insertText('[', '](url)')} />
           <ToolbarButton icon={ImageIcon} title="Image" onClick={() => insertText('![alt text](', ')')} />
+          <div className="w-px h-5 bg-slate-300 mx-1"></div>
+          <button 
+            onClick={handleAILMUpdate} 
+            disabled={isUpdating}
+            title="AILMUpdate (Generate AI Models Table)"
+            className="px-2 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            <span className="text-xs font-medium">AILMUpdate</span>
+          </button>
         </div>
         <textarea
           ref={textareaRef}
@@ -314,7 +388,16 @@ def hello_world():
           {`
             @media print {
               @page {
-                margin: 20mm;
+                @bottom-center {
+                  content: "Page " counter(page) " / " counter(pages);
+                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                  font-size: 10pt;
+                  color: #64748b;
+                }
+              }
+              body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
               }
             }
           `}
@@ -332,8 +415,8 @@ def hello_world():
         <div className="flex-1 overflow-auto p-8 print:overflow-visible print:p-0">
           <div ref={previewRef} className="prose prose-slate prose-headings:text-slate-700 prose-p:text-slate-600 prose-strong:text-slate-800 prose-strong:font-bold prose-em:text-slate-700 prose-em:italic prose-a:text-indigo-600 prose-li:text-slate-600 prose-blockquote:text-slate-500 prose-blockquote:border-slate-300 prose-pre:bg-slate-50 prose-pre:text-slate-700 prose-pre:border prose-pre:border-slate-200 prose-code:text-slate-700 prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:font-normal prose-code:before:content-none prose-code:after:content-none prose-hr:border-slate-200 prose-table:border-collapse prose-table:w-full prose-th:border prose-th:border-slate-200 prose-th:bg-slate-50 prose-th:p-2 prose-th:text-slate-700 prose-td:border prose-td:border-slate-200 prose-td:p-2 prose-td:text-slate-600 max-w-none print:max-w-full text-slate-600">
             <Markdown 
-              remarkPlugins={[remarkGfm]} 
-              rehypePlugins={[rehypeRaw]}
+              remarkPlugins={[remarkGfm, remarkMath]} 
+              rehypePlugins={[rehypeRaw, rehypeKatex]}
               components={{
                 code({node, inline, className, children, ...props}: any) {
                   const match = /language-(\w+)/.exec(className || '')
@@ -343,7 +426,7 @@ def hello_world():
                       children={String(children).replace(/\n$/, '')}
                       style={prism}
                       language={match[1]}
-                      PreTag="div"
+                      PreTag="pre"
                       customStyle={{ backgroundColor: 'transparent', padding: 0, margin: 0, border: 'none' }}
                     />
                   ) : (
